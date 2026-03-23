@@ -9,7 +9,7 @@
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@discordjs/voice": "^0.17.0",
+    "@discordjs/voice": "^0.19.2",
     "discord.js": "^14.25.1",
     "dotenv": "^16.4.5",
     "ffmpeg-static": "^5.2.0",
@@ -18,7 +18,7 @@
     "yt-dlp-exec": "^1.0.2"
   },
   "devDependencies": {
-    "@types/node": "^20.11.24",
+    "@types/node": "^20.19.37",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

@@ -82,7 +82,7 @@ export function setupPlayerEvents(queue: ServerQueue) {
             playTrack(queue);
         } else {
              Logger.info(`Queue finished for guild: ${queue.textChannelId}`);
-             queue.stop();
+             // Intentionally removed queue.stop() so it persistently stays in the channel!
         }
     });
 

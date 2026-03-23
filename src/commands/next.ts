@@ -16,16 +16,8 @@ export const nextCommand: Command = {
             return;
         }
 
-        queue.history.push(queue.currentTrack);
-        queue.currentTrack = queue.tracks.shift() || null;
-        queue.playbackDuration = 0;
-
-        if (queue.currentTrack) {
-            playTrack(queue);
-            await interaction.reply(`Skipped. Now playing **${queue.currentTrack.title}**.`);
-        } else {
-            queue.player.stop(true);
-            await interaction.reply('Skipped. The queue is now empty.');
-        }
+        // Just stop the player! The 'Idle' event in player.ts will automatically handle shifting the track or stopping cleanly!
+        queue.player.stop(true);
+        await interaction.reply('Skipped to the next track! ⏭️');
     }
 };

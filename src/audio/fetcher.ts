@@ -1,18 +1,26 @@
 import ytDlp from 'yt-dlp-exec';
 import { Logger } from '../utils/logger';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export async function fetchTrackInfo(query: string): Promise<{ title: string, url: string, duration: number, thumbnail: string, streamUrl: string } | null> {
     try {
         Logger.debug(`Fetching track info for: ${query}`);
         // If it's not a URL, prepend ytsearch1:
         const isUrl = /^https?:\/\//.test(query);
-        const target = isUrl ? query : `ytsearch1:${query}`;
+        const searchArgs = isUrl ? query : `ytsearch1:${query}`;
 
-        const data: any = await ytDlp(target, {
+        const ytDlpOptions: any = {
             dumpJson: true,
             format: 'bestaudio/best',
             noWarnings: true
-        });
+        };
+
+        if (fs.existsSync(path.join(process.cwd(), 'cookies.txt'))) {
+            ytDlpOptions.cookies = path.join(process.cwd(), 'cookies.txt');
+        }
+
+        const data: any = await ytDlp(searchArgs, ytDlpOptions);
 
         if (!data) {
              Logger.error(`Failed to parse yt-dlp result for: ${query}`);

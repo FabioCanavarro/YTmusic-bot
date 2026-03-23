@@ -12,11 +12,11 @@ export const joinCommand: Command = {
         .setDescription('Joins the voice channel you are currently in'),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const member = interaction.member as GuildMember;
-        const voiceChannel = member?.voice?.channel;
+        await interaction.deferReply();
+        const voiceChannel = (interaction.member as any)?.voice?.channel;
 
         if (!voiceChannel) {
-            await interaction.reply({ content: 'You must be in a voice channel to use this command.', ephemeral: true });
+            await interaction.editReply({ content: 'You need to be in a voice channel to join!' });
             return;
         }
 
@@ -33,6 +33,7 @@ export const joinCommand: Command = {
                 channelId: voiceChannel.id,
                 guildId: interaction.guildId!,
                 adapterCreator: interaction.guild!.voiceAdapterCreator as any,
+                selfDeaf: true,
             });
             
             connection.on('stateChange', (oldState, newState) => {
@@ -48,7 +49,7 @@ export const joinCommand: Command = {
             queue.connection.subscribe(queue.player);
             setupPlayerEvents(queue);
             Logger.info(`Connected to voice channel ${voiceChannel.id} in guild ${interaction.guildId}`);
-            await interaction.reply(`Joined ${voiceChannel.name}!`);
+            await interaction.editReply(`Joined **${voiceChannel.name}**!`);
         } catch (error) {
             Logger.error(`Failed to connect to voice channel: ${error}`);
             await interaction.reply('Failed to join the voice channel.');

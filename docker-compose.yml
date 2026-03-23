@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: ytmusic-bot
+    restart: unless-stopped
+    
+    # Load your DISCORD_TOKEN safely
+    env_file:
+      - .env
+      
+    # Bypasses local Docker network restrictions so UDP audio routes flawlessly
+    network_mode: "host"

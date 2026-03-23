@@ -17,16 +17,16 @@ export const addCommand: Command = {
                 .setRequired(true)),
 
     async execute(interaction: ChatInputCommandInteraction) {
+        await interaction.deferReply();
+        
         const url = interaction.options.getString('url', true);
         const member = interaction.member as GuildMember;
         const voiceChannel = member?.voice?.channel;
 
         if (!voiceChannel) {
-            await interaction.reply({ content: 'You must be in a voice channel to use this command.', ephemeral: true });
+            await interaction.editReply({ content: 'You need to be in a voice channel to play music!' });
             return;
         }
-
-        await interaction.deferReply();
 
         let queue = QueueManager.getInstance().get(interaction.guildId!);
         
@@ -39,6 +39,7 @@ export const addCommand: Command = {
                     channelId: voiceChannel.id,
                     guildId: interaction.guildId!,
                     adapterCreator: interaction.guild!.voiceAdapterCreator as any,
+                    selfDeaf: true,
                 });
                 
                 connection.on('stateChange', (oldState, newState) => {
