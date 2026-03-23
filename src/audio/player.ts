@@ -3,14 +3,32 @@ import { spawn } from 'child_process';
 import { ServerQueue } from './ServerQueue';
 import { Logger } from '../utils/logger';
 import ffmpegStatic from 'ffmpeg-static';
+import { fetchTrackInfo } from './fetcher';
 
-export function playTrack(queue: ServerQueue, seekTimeMs: number = 0) {
+export async function playTrack(queue: ServerQueue, seekTimeMs: number = 0) {
     if (!queue.currentTrack) return;
     
+    // Lazy-load the streamUrl if this track was imported purely from a playlist list!
+    if (!queue.currentTrack.streamUrl) {
+        try {
+            const fetched = await fetchTrackInfo(queue.currentTrack.url);
+            if (fetched) {
+                queue.currentTrack.streamUrl = fetched.streamUrl;
+            } else {
+                throw new Error("Missing stream data");
+            }
+        } catch (e) {
+            Logger.error(`Skipping playlist track ${queue.currentTrack.title} due to missing stream payload.`);
+            queue.currentTrack = queue.tracks.shift() || null;
+            if (queue.currentTrack) playTrack(queue);
+            return;
+        }
+    }
+
     const track = queue.currentTrack;
     Logger.info(`Playing track: ${track.title} with speed ${queue.speed}x and volume ${queue.volume}% starting at ${seekTimeMs}ms`);
 
-    const ffmpegPath = ffmpegStatic || 'ffmpeg'; // Use ffmpeg-static if available
+    const ffmpegPath = 'ffmpeg'; // Use native ffmpeg for Nix/Replit compatible deployment
     
     const ffmpegArgs = [
         '-reconnect', '1',
