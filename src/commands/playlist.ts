@@ -27,14 +27,7 @@ export const playlistCommand: Command = {
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
-    // Strict Authorization Check!
     const username = interaction.user.username.toLowerCase();
-    if (username !== "re_helios" && username !== "dive") {
-      await interaction.editReply({
-        content: "Access Denied",
-      });
-      return;
-    }
 
     const url = interaction.options.getString("url", true);
     const member = interaction.member as GuildMember;
@@ -68,6 +61,7 @@ export const playlistCommand: Command = {
         Logger.info(
           `Connected to voice channel ${voiceChannel.id} in guild ${interaction.guildId} for playlist import.`,
         );
+        await (interaction.channel as any)?.send(`✅ **Successfully joined voice channel!** Default volume is set to **${queue.volume}%**`);
       } catch (error) {
         Logger.error(`Failed to connect to voice channel: ${error}`);
         await interaction.followUp("Failed to join the voice channel.");
@@ -100,6 +94,13 @@ export const playlistCommand: Command = {
 
       const entries = playlistData.entries;
       let addedCount = 0;
+      
+      const playlistName = playlistData.title || "Unknown Playlist";
+      queue.activePlaylists.push({
+          name: playlistName,
+          url: url,
+          addedBy: interaction.user
+      });
 
       for (const entry of entries) {
         if (!entry.id) continue;
@@ -113,19 +114,19 @@ export const playlistCommand: Command = {
           requester: interaction.user,
         };
 
-        queue.tracks.push(track);
+        queue.playlistTracks.push(track);
         addedCount++;
       }
 
-      if (!queue.currentTrack && queue.tracks.length > 0) {
-        queue.currentTrack = queue.tracks.shift() || null;
+      if (!queue.currentTrack && queue.playlistTracks.length > 0) {
+        queue.currentTrack = queue.playlistTracks.shift() || null;
         playTrack(queue);
         await interaction.followUp(
-          `Added ${addedCount} songs to the queue. Now playing: **${queue.currentTrack?.title}**`,
+          `Added ${addedCount} songs from **${playlistName}** to the playlist queue. Now playing: **${queue.currentTrack?.title}**`,
         );
       } else {
         await interaction.followUp(
-          `Added ${addedCount} songs securely to the back of the queue!`,
+          `Added ${addedCount} songs from **${playlistName}** securely to the playlist queue!`,
         );
       }
     } catch (error) {

@@ -12,3 +12,5 @@ export * from './deafen';
 export * from './undeafen';
 export * from './pingaudio';
 export * from './playlist';
+export * from './skip';
+export * from './list';

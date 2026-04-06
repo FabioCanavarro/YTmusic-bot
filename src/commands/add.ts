@@ -56,6 +56,7 @@ export const addCommand: Command = {
                 setupPlayerEvents(queue);
                 QueueManager.getInstance().set(interaction.guildId!, queue);
                 Logger.info(`Connected to voice channel ${voiceChannel.id} in guild ${interaction.guildId}`);
+                await (interaction.channel as any)?.send(`✅ **Successfully joined voice channel!** Default volume is set to **${queue.volume}%**`);
             } catch (error) {
                 Logger.error(`Failed to connect to voice channel: ${error}`);
                 await interaction.followUp('Failed to join the voice channel.');
@@ -76,11 +77,11 @@ export const addCommand: Command = {
 
         if (!queue.currentTrack) {
             queue.currentTrack = track;
+            await interaction.followUp(`⏳ Fetching stream and building UI...`);
             playTrack(queue);
-            await interaction.followUp(`Now playing **${track.title}**`);
         } else {
             queue.tracks.push(track);
-            await interaction.followUp(`Added **${track.title}** to the queue`);
+            await interaction.followUp(`✅ Added **${track.title}** to the queue`);
         }
     }
 };

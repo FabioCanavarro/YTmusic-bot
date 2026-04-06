@@ -7,11 +7,20 @@ export async function registerEvents(client: Client) {
 
     client.once('ready', async () => {
         Logger.info(`Logged in as ${client.user?.tag}!`);
+        
+        // Default Activity when sitting empty
+        client.user?.setActivity('for commands /ytmusic', { type: 3 }); // ActivityType.Watching = 3
 
         const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
 
         try {
             Logger.debug('Started refreshing application (/) commands.');
+
+            // Wipe global commands to remove duplicates
+            await rest.put(
+                Routes.applicationCommands(client.user!.id),
+                { body: [] },
+            );
 
             // Registering commands to all guilds the bot is in guarantees instant sync!
             for (const guild of client.guilds.cache.values()) {

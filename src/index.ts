@@ -9,7 +9,7 @@ dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 
-const client = new Client({
+export const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 

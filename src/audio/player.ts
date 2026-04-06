@@ -4,6 +4,8 @@ import { ServerQueue } from './ServerQueue';
 import { Logger } from '../utils/logger';
 import ffmpegStatic from 'ffmpeg-static';
 import { fetchTrackInfo } from './fetcher';
+import { client } from '../index';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from 'discord.js';
 
 export async function playTrack(queue: ServerQueue, seekTimeMs: number = 0) {
     if (!queue.currentTrack) return;
@@ -19,7 +21,7 @@ export async function playTrack(queue: ServerQueue, seekTimeMs: number = 0) {
             }
         } catch (e) {
             Logger.error(`Skipping playlist track ${queue.currentTrack.title} due to missing stream payload.`);
-            queue.currentTrack = queue.tracks.shift() || null;
+            queue.currentTrack = queue.tracks.shift() || queue.playlistTracks.shift() || null;
             if (queue.currentTrack) playTrack(queue);
             return;
         }
@@ -27,6 +29,35 @@ export async function playTrack(queue: ServerQueue, seekTimeMs: number = 0) {
 
     const track = queue.currentTrack;
     Logger.info(`Playing track: ${track.title} with speed ${queue.speed}x and volume ${queue.volume}% starting at ${seekTimeMs}ms`);
+
+    // Broadcast a gorgeous interactive embed to the chat!
+    try {
+        const channel = await client.channels.fetch(queue.textChannelId) as TextChannel;
+        if (channel && seekTimeMs === 0) {
+            const embed = new EmbedBuilder()
+                .setColor('#FF0000') // YouTube Red
+                .setTitle(track.title)
+                .setURL(track.url)
+                .setDescription(`▶️ **Now Playing**\nRequested by: ${track.requester?.username || 'Unknown'}`)
+                .setThumbnail(track.thumbnail || 'https://i.imgur.com/vIqEGE7.png')
+                .setTimestamp();
+
+            const button = new ButtonBuilder()
+                .setLabel('Watch on YouTube')
+                .setURL(track.url)
+                .setStyle(ButtonStyle.Link)
+                .setEmoji('📺');
+
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+
+            await channel.send({ embeds: [embed], components: [row] });
+        }
+    } catch(err) {
+        Logger.error(`Failed to broadcast playing embed: ${err}`);
+    }
+
+    // Dynamic Rich Presence: Update bot status to 'Listening to Track Name'
+    client.user?.setActivity(track.title.substring(0, 128), { type: 2 }); // 128 max length, ActivityType.Listening = 2
 
     const ffmpegPath = 'ffmpeg'; // Use native ffmpeg for Nix/Replit compatible deployment
     
@@ -93,13 +124,14 @@ export function setupPlayerEvents(queue: ServerQueue) {
             queue.history.push(queue.currentTrack);
         }
         
-        queue.currentTrack = queue.tracks.shift() || null;
+        queue.currentTrack = queue.tracks.shift() || queue.playlistTracks.shift() || null;
         
         if (queue.currentTrack) {
             queue.playbackDuration = 0; // reset
             playTrack(queue);
         } else {
              Logger.info(`Queue finished for guild: ${queue.textChannelId}`);
+             client.user?.setActivity('for commands /ytmusic', { type: 3 }); // ActivityType.Watching = 3
              // Intentionally removed queue.stop() so it persistently stays in the channel!
         }
     });
@@ -107,7 +139,7 @@ export function setupPlayerEvents(queue: ServerQueue) {
     queue.player.on('error', error => {
         Logger.error(`Error from AudioPlayer: ${error.message}`);
         // Skip current song
-        queue.currentTrack = queue.tracks.shift() || null;
+        queue.currentTrack = queue.tracks.shift() || queue.playlistTracks.shift() || null;
         if (queue.currentTrack) {
             queue.playbackDuration = 0;
             playTrack(queue);

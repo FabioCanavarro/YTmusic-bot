@@ -49,7 +49,7 @@ export const joinCommand: Command = {
             queue.connection.subscribe(queue.player);
             setupPlayerEvents(queue);
             Logger.info(`Connected to voice channel ${voiceChannel.id} in guild ${interaction.guildId}`);
-            await interaction.editReply(`Joined **${voiceChannel.name}**!`);
+            await interaction.editReply(`✅ **Successfully joined ${voiceChannel.name}!** Default volume is set to **${queue.volume}%**`);
         } catch (error) {
             Logger.error(`Failed to connect to voice channel: ${error}`);
             await interaction.reply('Failed to join the voice channel.');
